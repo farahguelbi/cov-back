@@ -5,48 +5,91 @@ const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const nodemailer=require("nodemailer");
 const OTP = require('../models/OTP');
+const { governorates } = require('../constants');
+
 
 // Registration function
 // This function handles the registration of a new user by checking if the email already exists, hashing the password, and saving the user to the database.
-const register = async (req, res) => {
-    try {
+// const register = async (req, res) => {
+//     try {
        
-        const userExists = await User.countDocuments({ phone: req.body.phone });
-        if (userExists > 0) {
-            return res.status(403).json({ message: "User already exists" });
-        }
+//         const userExists = await User.countDocuments({ phone: req.body.phone });
+//         if (userExists > 0) {
+//             return res.status(403).json({ message: "User already exists" });
+//         }
 
      
-        bcrypt.hash(req.body.password, 10, async (err, hashedPass) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
+//         bcrypt.hash(req.body.password, 10, async (err, hashedPass) => {
+//             if (err) {
+//                 return res.status(500).json({ error: err });
+//             }
 
            
-            const user = new User({
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                imageUrl: req.body.imageUrl,
-                birthDate: req.body.birthDate,
-                email: req.body.email,
-                role: req.body.role,
-                phone: req.body.phone,
-                password: hashedPass,
-                governorate: req.body.governorate,
+//             const user = new User({
+//                 firstName: req.body.firstName,
+//                 lastName: req.body.lastName,
+//                 imageUrl: req.body.imageUrl,
+//                 birthDate: req.body.birthDate,
+//                 email: req.body.email,
+//                 role: req.body.role,
+//                 phone: req.body.phone,
+//                 password: hashedPass,
+//                 governorate: req.body.governorate,
                
-            });
+//             });
 
            
-            const savedUser = await user.save();
-            res.status(201).json({
-                message: "User added successfully",
-                uId: savedUser.id,
-            });
+//             const savedUser = await user.save();
+//             res.status(201).json({
+//                 message: "User added successfully",
+//                 uId: savedUser.id,
+//             });
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error occurred during registration" });
+//     }
+// };
+
+const register = async (req, res) => {
+    try {
+        const { firstName, lastName, imageUrl, birthDate, email, role, phone, password, governorate } = req.body;
+
+        // Vérifier si le téléphone OU l'email existent déjà
+        const userExists = await User.findOne({ $or: [{ phone }, { email }] });
+        if (userExists) {
+            return res.status(403).json({ message: "User already exists with this phone or email" });
+        }
+
+        // Hacher le mot de passe
+        const hashedPass = await bcrypt.hash(password, 10);
+
+        // Créer un nouvel utilisateur
+        const user = new User({
+            firstName,
+            lastName,
+            imageUrl,
+            birthDate,
+            email,
+            role,
+            phone,
+            password: hashedPass,
+            governorate,
         });
+
+        // Sauvegarder dans la base de données
+        const savedUser = await user.save();
+
+        res.status(201).json({
+            message: "User added successfully",
+            uId: savedUser.id,
+        });
+
     } catch (error) {
+        console.error("Registration error:", error);
         res.status(500).json({ message: "Error occurred during registration" });
     }
 };
+
 
 // Login function
 // This function verifies the user's credentials and generates JWT and refresh tokens upon successful login.
@@ -122,34 +165,61 @@ const profilgetById = async (req, res) => {
 
 
 // Update user profile
-// This function updates the user's profile information such as name, email, phone, address, and other fields.
-const UpdateProfil = async (req, res) => {
-    const { firstName, lastName, id, phone, address, gender, birthDate } = req.body;
+const UpdateProfile = async (req, res) => {
+  const { id } = req.params;
+  const { firstName, lastName, phone, governorate, birthDate } = req.body;
 
-  
-    try {
-        // Update the user details in the database
-        const updatedUser = await User.findByIdAndUpdate(
-            id,
-            { firstName, lastName, phone, address, gender, birthDate },
-            { new: true }
-        );
+  // Validate governorate
+  if (!governorates.includes(governorate)) {
+    return res.status(400).json({ 
+      message: "Invalid governorate value",
+      validGovernorates: governorates
+    });
+  }
 
+  try {
+    const updateData = {
+      firstName,
+      lastName,
+      phone,
+      governorate,
+      birthDate: new Date(birthDate)
+    };
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { 
+        new: true,
+        runValidators: true
+      }
+    ).select('-password');
 
-        res.status(200).json({
-            message: "Profile updated successfully",
-            updatedUser,
-        });
-    }  catch (error) {
-        console.error("Error updating profile:", error);
-        res.status(500).json({ message: "Profile not updated", error: error.message });
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
     }
-};
 
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Validation error",
+        errors: error.errors 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: "Error updating profile",
+      error: error.message 
+    });
+  }
+};
 // Refresh JWT token
 // This function generates a new JWT token if the provided refresh token is valid.
 const refreshtoken = (req, res) => {
@@ -541,7 +611,7 @@ module.exports = {
     register,
     login,
     profilgetById,
-    UpdateProfil,
+    UpdateProfile,
     refreshtoken,
     updatepassword,
     forgetPassword,

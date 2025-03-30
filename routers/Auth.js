@@ -16,7 +16,7 @@ router.post('/login', AuthController.login);
 router.get('/profile/:id', AuthController.profilgetById);
 
 // Update User Profile
-router.put('/profile/update', AuthController.UpdateProfil);
+router.put('/profile/update/:id', AuthController.UpdateProfile);
 
 // Refresh Token
 router.post('/refresh-token', AuthController.refreshtoken);

@@ -23,10 +23,11 @@ app.use(bodyParser.json())
 app.use("/uploads/images", express.static("uploads/images"));
 
 
-                                                                                                                                                                                                           
+const Host = process.env.IP_ADDRESS || '0.0.0.0'; 
+                                                                                                                                                                                                         
 // MongoDB connection
   mongoose
-  .connect('mongodb://localhost:27017/covoiturage', { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
@@ -45,12 +46,12 @@ app.use("/uploads/images", express.static("uploads/images"));
 
 
   app.use((err, req, res, next) => {
-    console.error(err.stack); // Log the error details
+    console.error(err.stack); 
     res.status(500).send('Something went wrong!');
   });
   
   
 
-  app.listen(5000, '0.0.0.0', () => {
+  app.listen(5000, Host, () => {
     console.log('Server is running on http://0.0.0.0:5000');
   });
