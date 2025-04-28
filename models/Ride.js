@@ -9,13 +9,16 @@ const RideSchema = new Schema({
   location2: { type: String, required: true },
   smoking: { type: Boolean, required: true },
   animals: { type: Boolean, required: true },
-  driver: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  vehicle: { type: mongoose.Schema.Types.ObjectId, ref: "Vehicle", required: true },
-  freePlaces: { type: Number, required: true },
-  driverImageUrl: { type: String, required: true },
+  driver: {type: String, required: true },
+  vehicle: { type: String },
+  date: { type: String, required: true },
   passengerCount: { type: Number, required: true },
-  luggageSize: { type: String, enum: ["petit", "moyen", "grand"], required: true }
+  luggageSize: { type: String, enum: ["petit", "moyen", "grand"], required: true },
+  price: { type: Number , required: true },
+  // rating: { type: Number, required: true },
+
+
 }, { timestamps: true });
 
-const Ride = mongoose.model('Ride', RideSchema); 
-module.exports = Ride;
+
+module.exports = mongoose.models.Ride || mongoose.model('Ride', RideSchema);

@@ -14,6 +14,7 @@ app.use(cors());
 const AuthRoute = require ('./routers/Auth')
 const rideRoutes = require("./routers/rideRoutes");
 const vehicleRoutes = require("./routers/vehicleRoutes");
+const reservationRoutes = require("./routers/reservationRoutes");
 
 
 // Middleware
@@ -38,8 +39,8 @@ const Host = process.env.IP_ADDRESS || '0.0.0.0';
   app.use('/api', AuthRoute);
   app.use("/api/rides", rideRoutes);
   app.use("/api/vehicles", vehicleRoutes);
-
-
+  app.use('/api/reservation', reservationRoutes);
+  app.use('/api/rides', rideRoutes);
 
 
 

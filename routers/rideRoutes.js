@@ -10,5 +10,6 @@ router.get("/", rideController.getAllRides);
 router.get("/:id", rideController.getRideById);
 router.put("/update/:id", rideController.updateRide);
 router.delete("/delete/:id", rideController.deleteRide);
-
+// Route pour chercher les rides avec filtres
+router.get('/search', rideController.searchRides);
 module.exports = router;
