@@ -39,7 +39,7 @@ const Host = process.env.IP_ADDRESS || '0.0.0.0';
   app.use('/api', AuthRoute);
   app.use("/api/rides", rideRoutes);
   app.use("/api/vehicles", vehicleRoutes);
-  app.use('/api/reservation', reservationRoutes);
+  app.use('/api/reservations', reservationRoutes);
   app.use('/api/rides', rideRoutes);
 
 
